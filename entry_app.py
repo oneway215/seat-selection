@@ -1,33 +1,73 @@
-from flask import Flask, request, render_template, redirect, url_for
-import uuid
+# seat-selector/entry_app.py
+from flask import Flask, render_template, request, redirect, url_for, session
+import pandas as pd
+import qrcode
+import os
+import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'my_secret_key'
+app.secret_key = 'your_secret_key'
 
-# 좌석 예약 상태 저장
-reserved_seats = {}  # 예: { 'R1C1': 'abc123', 'R2C5': 'xyz789' }
-user_seat_map = {}   # 예: { 'abc123': 'R1C1', 'xyz789': 'R2C5' }
+data_file = 'data.xlsx'
+if not os.path.exists(data_file):
+    df = pd.DataFrame(columns=['name', 'rrn', 'phone', 'seat', 'id'])
+    df.to_excel(data_file, index=False)
 
-@app.route('/')
-def seat_page():
-    return render_template('seats.html', reserved=reserved_seats)
+def generate_id(name, rrn, phone, seat):
+    unique_str = f"{name}-{rrn}-{phone}-{seat}"
+    return hashlib.sha256(unique_str.encode()).hexdigest()[:12]
 
-@app.route('/reserve', methods=['POST'])
-def reserve():
-    seat_id = request.form['seat']
-    if seat_id in reserved_seats:
-        return f"<h3>{seat_id}는 이미 예약된 좌석입니다.</h3><a href='/'>돌아가기</a>"
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        name = request.form['name']
+        rrn = request.form['rrn']
+        phone = request.form['phone']
+        seat = request.form['seat']
 
-    unique_id = str(uuid.uuid4())[:8]  # 8자리 고유 ID 생성
-    reserved_seats[seat_id] = unique_id
-    user_seat_map[unique_id] = seat_id
-    return redirect(url_for('check_in', id=unique_id))
+        user_id = generate_id(name, rrn, phone, seat)
+        df = pd.read_excel(data_file)
+
+        if user_id not in df['id'].values:
+            df.loc[len(df)] = [name, rrn, phone, seat, user_id]
+            df.to_excel(data_file, index=False)
+
+            # QR코드 생성
+            qr = qrcode.make(f"https://seat-selection-xxxx.onrender.com/check?id={user_id}")
+            qr.save(f"static/qrs/{user_id}.png")
+
+        return redirect(url_for('success', user_id=user_id))
+
+    return render_template('index.html')
+
+@app.route('/success')
+def success():
+    user_id = request.args.get('user_id')
+    df = pd.read_excel(data_file)
+    row = df[df['id'] == user_id].iloc[0]
+    return render_template('success.html', name=row['name'], seat=row['seat'], user_id=user_id)
 
 @app.route('/check')
-def check_in():
-    user_id = request.args.get('id', 'UNKNOWN')
-    seat_id = user_seat_map.get(user_id, '정보 없음')
-    return render_template('entry.html', user_id=user_id, seat_id=seat_id)
+def check():
+    user_id = request.args.get('id')
+    if not user_id:
+        return "잘못된 접근입니다."
+
+    df = pd.read_excel(data_file)
+    row = df[df['id'] == user_id]
+
+    if len(row) == 0:
+        return "입력된 사용자가 없습니다."
+
+    seat = row.iloc[0]['seat']
+    key = f"checked_{user_id}"
+
+    if session.get(key):
+        return render_template("entry.html", msg="❌ 이미 입장하셨습니다.", color="red", seat=seat)
+    else:
+        session[key] = True
+        return render_template("entry.html", msg="✅ 확인되었습니다.", color="green", seat=seat)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(debug=True)
+
