@@ -33,7 +33,8 @@ def index():
             df.to_excel(data_file, index=False)
 
             # QR코드 생성
-            qr = qrcode.make(f"https://seat-selection-xxxx.onrender.com/check?id={user_id}")
+            os.makedirs("static/qrs", exist_ok=True)
+            qr = qrcode.make(f"https://your-app-url.onrender.com/check?id={user_id}")
             qr.save(f"static/qrs/{user_id}.png")
 
         return redirect(url_for('success', user_id=user_id))
@@ -70,4 +71,3 @@ def check():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
