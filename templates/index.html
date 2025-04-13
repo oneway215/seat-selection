@@ -1,0 +1,112 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>좌석 선택</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        form {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input {
+            padding: 8px;
+            width: 250px;
+            font-size: 1em;
+        }
+        .seats {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            gap: 8px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .seat {
+            width: 50px;
+            height: 50px;
+            background-color: #d3d3d3;
+            border-radius: 5px;
+            line-height: 50px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <h2>개인정보 입력 후 좌석을 선택해주세요</h2>
+    <form id="infoForm">
+        <label>이름</label>
+        <input type="text" name="name" required><br>
+        <label>주민등록번호 앞자리(6자리) + 뒷자리(1자리)</label>
+        <input type="text" name="rrn" maxlength="7" required><br>
+        <label>전화번호</label>
+        <input type="text" name="phone" required><br>
+    </form>
+
+    <div class="seats" id="seatsContainer"></div>
+
+    <form method="POST" action="/" id="submitForm" style="display:none;">
+        <input type="hidden" name="name">
+        <input type="hidden" name="rrn">
+        <input type="hidden" name="phone">
+        <input type="hidden" name="seat">
+        <button type="submit">제출</button>
+    </form>
+
+    <img src="{{ url_for('static', filename='kma.png') }}" alt="KMA 로고" style="max-width: 200px; margin-top: 30px;">
+
+    <script>
+        const seatsContainer = document.getElementById('seatsContainer');
+        const submitForm = document.getElementById('submitForm');
+        const infoForm = document.getElementById('infoForm');
+
+        for (let i = 1; i <= 500; i++) {
+            const seat = document.createElement('div');
+            seat.className = 'seat';
+            seat.textContent = i;
+            seat.addEventListener('click', () => selectSeat(seat, i));
+            seatsContainer.appendChild(seat);
+        }
+
+        function selectSeat(seatDiv, seatNum) {
+            if (seatDiv.classList.contains('occupied')) return;
+
+            const name = infoForm.name.value.trim();
+            const rrn = infoForm.rrn.value.trim();
+            const phone = infoForm.phone.value.trim();
+
+            if (!name || !rrn || !phone) {
+                alert("개인정보를 모두 입력해주세요.");
+                return;
+            }
+
+            document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+            seatDiv.classList.add('selected');
+
+            submitForm.name.value = name;
+            submitForm.rrn.value = rrn;
+            submitForm.phone.value = phone;
+            submitForm.seat.value = seatNum;
+
+            submitForm.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
