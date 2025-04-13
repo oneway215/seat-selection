@@ -1,0 +1,38 @@
+<!-- templates/success.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>등록 완료</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        h2 {
+            color: green;
+        }
+        img.qr {
+            margin-top: 30px;
+            width: 220px;
+        }
+        .info {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h2>✅ 등록이 완료되었습니다!</h2>
+    <div class="info">
+        <p><strong>이름:</strong> {{ name }}</p>
+        <p><strong>선택한 좌석:</strong> {{ seat }}</p>
+        <p><strong>QR 코드로 입장 확인 가능합니다.</strong></p>
+    </div>
+
+    <img src="{{ url_for('static', filename='qrs/' + user_id + '.png') }}" class="qr" alt="QR코드">
+
+    <img src="{{ url_for('static', filename='kma.png') }}" alt="KMA 로고" style="max-width: 200px; margin-top: 30px;">
+</body>
+</html>
