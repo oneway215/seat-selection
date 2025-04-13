@@ -70,4 +70,7 @@ def check():
         return render_template("entry.html", msg="✅ 확인되었습니다.", color="green", seat=seat)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))  # Render는 PORT 환경변수를 씀
+    app.run(host='0.0.0.0', port=port)
+
