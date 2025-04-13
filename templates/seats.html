@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>500석 좌석 선택</title>
+  <style>
+    table { border-collapse: collapse; }
+    td { padding: 4px; }
+    button {
+      width: 55px;
+      height: 40px;
+      font-size: 0.9em;
+    }
+    .reserved {
+      background-color: gray;
+      color: white;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h2>좌석을 선택해주세요</h2>
+  <table>
+    {% for row in range(1, 26) %}
+    <tr>
+      {% for col in range(1, 21) %}
+        {% set seat_id = 'R' + row|string + 'C' + col|string %}
+        <td>
+          {% if seat_id in reserved %}
+            <button class="reserved" disabled>{{ seat_id }}</button>
+          {% else %}
+            <form method="POST" action="{{ url_for('reserve') }}">
+              <input type="hidden" name="seat" value="{{ seat_id }}">
+              <button type="submit">{{ seat_id }}</button>
+            </form>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
